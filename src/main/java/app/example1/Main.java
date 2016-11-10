@@ -1,4 +1,4 @@
-package app;
+package app.example1;
 
 import app.example1.Pet;
 import app.example1.StaticPet;

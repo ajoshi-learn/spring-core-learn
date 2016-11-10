@@ -3,6 +3,12 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-   <import resource="example1.xml"/>
-   <import resource="example2.xml"/>
+    <bean id="bar" class="app.example2.Bar"/>
+    <bean id="baz" class="app.example2.Baz"/>
+
+    <bean id="foo" class="app.example2.Foo">
+        <constructor-arg ref="bar"/>
+        <constructor-arg ref="baz"/>
+        <constructor-arg name="number" value="1"/>
+    </bean>
 </beans>
