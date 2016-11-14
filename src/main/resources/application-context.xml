@@ -5,4 +5,5 @@
 
    <import resource="example1.xml"/>
    <import resource="example2.xml"/>
+   <import resource="example3.xml"/>
 </beans>

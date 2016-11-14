@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="baseObject" class="app.example3.BaseObject" abstract="true">
+        <property name="properties">
+            <props>
+                <prop key="key1">value1</prop>
+                <prop key="key2">value2</prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean id="derivedObject" class="app.example3.DerivedObject">
+        <property name="properties">
+            <props>
+                <prop key="key2">value228</prop>
+                <prop key="key3">valueChild</prop>
+            </props>
+        </property>
+    </bean>
+</beans>
