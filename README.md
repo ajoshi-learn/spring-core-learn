@@ -277,3 +277,84 @@ In the `<list/>`, `<set/>`, `<map/>`, and `<props/>` elements, you set the prope
     </bean>
 <beans>
 ```
+
+##### Null and empty string values
+```
+<bean class="ExampleBean">
+    <property name="email">
+        <null/>
+    </property>
+</bean>
+```
+
+
+#### Using depends-on
+```
+<bean id="beanOne" class="ExampleBean" depends-on="manager,accountDao">
+    <property name="manager" ref="manager" />
+</bean>
+
+<bean id="manager" class="ManagerBean" />
+<bean id="accountDao" class="x.y.jdbc.JdbcAccountDao" />
+```
+
+#### Lazy-initialized beans
+```
+<bean id="lazy" class="com.foo.ExpensiveToCreateBean" lazy-init="true"/>
+<bean name="not.lazy" class="com.foo.AnotherBean"/>
+```
+
+```
+<beans default-lazy-init="true">
+    <!-- no beans will be pre-instantiated... -->
+</beans>
+```
+
+#### Autowiring
+When using XML-based configuration metadata, you specify autowire mode for a bean definition with the autowire attribute of the `<bean/>` element. The autowiring functionality has four modes. You specify autowiring per bean and thus can choose which ones to autowire.
+
+| Mode        | Explaination                                                                                                                                                                                                                                                                                                                                    |
+|-------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| no          | (Default) No autowiring. Bean references must be defined via a ref element. Changing the default setting is not recommended for larger deployments, because specifying collaborators explicitly gives greater control and clarity. To some extent, it documents the structure of a system.                                                      |
+| byName      | Autowiring by property name. Spring looks for a bean with the same name as the property that needs to be autowired. For example, if a bean definition is set to autowire by name, and it contains a master property (that is, it has a setMaster(..) method), Spring looks for a bean definition named master, and uses it to set the property. |
+| byType      | Allows a property to be autowired if exactly one bean of the property type exists in the container. If more than one exists, a fatal exception is thrown, which indicates that you may not use byType autowiring for that bean. If there are no matching beans, nothing happens; the property is not set.                                       |
+| constructor | Analogous to byType, but applies to constructor arguments. If there is not exactly one bean of the constructor argument type in the container, a fatal error is raised.                                                                                                                                                                         |
+
+##### Limitations and disadvantages of autowiring
+
+* Explicit dependencies in property and constructor-arg settings always override autowiring. You cannot autowire so-called simple properties such as primitives, Strings, and Classes (and arrays of such simple properties). This limitation is by-design.
+* Autowiring is less exact than explicit wiring. Although, as noted in the above table, Spring is careful to avoid guessing in case of ambiguity that might have unexpected results, the relationships between your Spring-managed objects are no longer documented explicitly.
+* Wiring information may not be available to tools that may generate documentation from a Spring container.
+* Multiple bean definitions within the container may match the type specified by the setter method or constructor argument to be autowired. For arrays, collections, or Maps, this is not necessarily a problem. However for dependencies that expect a single value, this ambiguity is not arbitrarily resolved. If no unique bean definition is available, an exception is thrown.
+
+##### Excluding a bean from autowiring
+
+On a per-bean basis, you can exclude a bean from autowiring. In Spring’s XML format, set the `autowire-candidate` attribute of the `<bean/>` element to false; the container makes that specific bean definition unavailable to the autowiring infrastructure (including annotation style configurations such as `@Autowired)`.
+
+##### Arbitrary method replacement
+
+With XML-based configuration metadata, you can use the `replaced-method` element to replace an existing method implementation with another, for a deployed bean. Consider the following class, with a method computeValue, which we want to override:
+```
+public class MyValueCalculator {
+    public String computeValue(String input) {
+        // some real code...
+    }
+```
+```
+public class ReplacementComputeValue implements MethodReplacer {
+    public Object reimplement(Object o, Method m, Object[] args) throws Throwable {
+        // get the input value, work with it, and return a computed result
+        String input = (String) args[0];
+        return ...;
+    }
+}
+```
+```
+<bean id="myValueCalculator" class="x.y.z.MyValueCalculator">
+    <!-- arbitrary method replacement -->
+    <replaced-method name="computeValue" replacer="replacementComputeValue">
+        <arg-type>String</arg-type>
+    </replaced-method>
+</bean>
+<bean id="replacementComputeValue" class="a.b.c.ReplacementComputeValue"/>
+```
