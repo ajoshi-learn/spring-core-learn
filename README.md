@@ -390,3 +390,4 @@ In contrast to the other scopes, Spring does not manage the complete lifecycle o
 ##### Creating a custom scope
 
 To integrate your custom scope(s) into the Spring container, you need to implement the `org.springframework.beans.factory.config.Scope` interface
+[Example](src/main/java/example4)
