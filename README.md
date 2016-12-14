@@ -392,3 +392,63 @@ In contrast to the other scopes, Spring does not manage the complete lifecycle o
 To integrate your custom scope(s) into the Spring container, you need to implement the `org.springframework.beans.factory.config.Scope` interface
 
 [Example](src/main/java/example4)
+
+### Customizing the nature of a bean
+
+#### Lifecycle callbacks
+
+To interact with the container’s management of the bean lifecycle, you can implement the Spring `InitializingBean` and `DisposableBean` interfaces. The container calls `afterPropertiesSet()` for the former and `destroy()` for the latter to allow the bean to perform certain actions upon initialization and destruction of your beans.
+
+##### Initialization callbacks
+
+The `org.springframework.beans.factory.InitializingBean` interface allows a bean to perform initialization work after all necessary properties on the bean have been set by the container. The `InitializingBean` interface specifies a single method:
+```
+void afterPropertiesSet() throws Exception;
+```
+Alternatively, use the `@PostConstruct` annotation or specify a POJO initialization method. In the case of XML-based configuration metadata, you use the init-method attribute to specify the name of the method that has a void no-argument signature.
+```
+<bean id="exampleInitBean" class="examples.ExampleBean" init-method="init"/>
+```
+
+##### Destruction callbacks
+
+Implementing the `org.springframework.beans.factory.DisposableBean` interface allows a bean to get a callback when the container containing it is destroyed. The `DisposableBean` interface specifies a single method:
+```
+void destroy() throws Exception;
+```
+
+Alternatively, use the `@PreDestroy` annotation or specify a generic method that is supported by bean definitions. With XML-based configuration metadata, you use the destroy-method attribute.
+```
+<bean id="exampleInitBean" class="examples.ExampleBean" destroy-method="cleanup"/>
+```
+
+##### Default initialization and destroy methods
+```
+<beans default-init-method="init">
+    <bean id="blogService" class="com.foo.DefaultBlogService">
+        <property name="blogDao" ref="blogDao" />
+    </bean>
+</beans>
+```
+
+##### Combining lifecycle mechanisms
+
+Multiple lifecycle mechanisms configured for the same bean, with different initialization methods, are called as follows:
+
+* Methods annotated with `@PostConstruct`
+* `afterPropertiesSet()` as defined by the `InitializingBean` callback interface
+* A custom configured `init()` method
+
+Destroy methods are called in the same order:
+
+* Methods annotated with `@PreDestroy`
+* `destroy()` as defined by the `DisposableBean` callback interface
+* A custom configured `destroy()` method
+
+#### ApplicationContextAware and BeanNameAware
+
+When an `ApplicationContext` creates an object instance that implements the `org.springframework.context.ApplicationContextAware` interface, the instance is provided with a reference to that `ApplicationContext`.
+Thus beans can manipulate programmatically the `ApplicationContext` that created them, through the `ApplicationContext` interface, or by casting the reference to a known subclass of this interface, such as `ConfigurableApplicationContext`, which exposes additional functionality.
+
+### Bean definition inheritance
+

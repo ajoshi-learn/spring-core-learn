@@ -3,7 +3,5 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-    <!--<bean class="app.example4.scope.ScopeRegisterBFPP"/>-->
-    <bean class="app.example4.scope.OddScopeConfigurer"/>
-    <bean id="beanExample" class="app.example4.BeanExample" scope="odd-scope" init-method="init"/>
+
 </beans>
