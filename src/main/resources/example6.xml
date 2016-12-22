@@ -3,10 +3,8 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-   <import resource="example1.xml"/>
-   <import resource="example2.xml"/>
-   <import resource="example3.xml"/>
-   <import resource="example4.xml"/>
-   <import resource="example5.xml"/>
-   <import resource="example6.xml"/>
+    <bean class="app.example6.bpp.InstantiationTracingBeanPostProcessor"/>
+    <bean id="simpleBean" class="app.example6.bpp.SimpleBean">
+        <property name="data" value="data"/>
+    </bean>
 </beans>

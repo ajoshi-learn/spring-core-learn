@@ -452,3 +452,47 @@ Thus beans can manipulate programmatically the `ApplicationContext` that created
 
 ### Bean definition inheritance
 
+A bean definition can contain a lot of configuration information, including constructor arguments, property values, and container-specific information such as initialization method, static factory method name, and so on. A child bean definition inherits configuration data from a parent definition. The child definition can override some values, or add others, as needed. Using parent and child bean definitions can save a lot of typing.
+```
+<bean id="inheritedTestBean" abstract="true"
+        class="org.springframework.beans.TestBean">
+    <property name="name" value="parent"/>
+    <property name="age" value="1"/>
+</bean>
+
+<bean id="inheritsWithDifferentClass"
+        class="org.springframework.beans.DerivedTestBean"
+        parent="inheritedTestBean" init-method="initialize">
+    <property name="name" value="override"/>
+    <!-- the age property value of 1 will be inherited from parent -->
+</bean>
+```
+
+A child bean definition uses the bean class from the parent definition if none is specified, but can also override it. In the latter case, the child bean class must be compatible with the parent, that is, it must accept the parent’s property values.
+
+A child bean definition inherits scope, constructor argument values, property values, and method overrides from the parent, with the option to add new values. Any scope, initialization method, destroy method, and/or static factory method settings that you specify will override the corresponding parent settings
+The remaining settings are always taken from the child definition: _depends on_, _autowire mode_, _dependency check_, _singleton_, _lazy init_.
+
+### Container extension points
+
+#### Customizing beans using a BeanPostProcessor
+
+The `BeanPostProcessor` interface defines callback methods that you can implement to provide your own (or override the container’s default) instantiation logic, dependency-resolution logic, and so forth. If you want to implement some custom logic after the Spring container finishes instantiating, configuring, and initializing a bean, you can plug in one or more `BeanPostProcessor` implementations.
+You can configure multiple `BeanPostProcessor` instances, and you can control the order in which these `BeanPostProcessors` execute by setting the order property. You can set this property only if the `BeanPostProcessor` implements the `Ordered` interface; if you write your own `BeanPostProcessor` you should consider implementing the `Ordered` interface too.
+
+#### Customizing configuration metadata with a BeanFactoryPostProcessor
+
+The next extension point that we will look at is the `org.springframework.beans.factory.config.BeanFactoryPostProcessor`. The semantics of this interface are similar to those of the `BeanPostProcessor`, with one major difference: `BeanFactoryPostProcessor` operates on the bean configuration metadata; that is, the Spring IoC container allows a `BeanFactoryPostProcessor` to read the configuration metadata and potentially change it before the container instantiates any beans other than `BeanFactoryPostProcessors`.
+
+#### Customizing instantiation logic with a FactoryBean
+
+Implement the `org.springframework.beans.factory.FactoryBean` interface for objects that are themselves factories.
+
+The `FactoryBean` interface is a point of pluggability into the Spring IoC container’s instantiation logic. If you have complex initialization code that is better expressed in Java as opposed to a (potentially) verbose amount of XML, you can create your own `FactoryBean`, write the complex initialization inside that class, and then plug your custom `FactoryBean` into the container.
+
+The `FactoryBean` interface provides three methods:
+
+* `Object getObject()`: returns an instance of the object this factory creates. The instance can possibly be shared, depending on whether this factory returns singletons or prototypes.
+* `boolean isSingleton()`: returns true if this FactoryBean returns singletons, false otherwise.
+* `Class getObjectType()`: returns the object type returned by the `getObject()` method or null if the type is not known in advance.
+
