@@ -702,3 +702,150 @@ public class SimpleMovieLister {
 ```
 
 ### Java-based container configuration
+
+#### Basic concepts: @Bean and @Configuration
+Annotating a class with `@Configuration` indicates that its primary purpose is as a source of bean definitions. Furthermore, `@Configuration` classes allow inter-bean dependencies to be defined by simply calling other `@Bean` methods in the same class. The simplest possible `@Configuration` class would read as follows:
+```
+@Configuration
+public class AppConfig {
+    @Bean
+    public MyService myService() {
+        return new MyServiceImpl();
+    }
+}
+```
+
+#### Instantiating the Spring container using AnnotationConfigApplicationContext
+
+##### Simple construction
+```
+public static void main(String[] args) {
+    ApplicationContext ctx = new AnnotationConfigApplicationContext(AppConfig.class);
+    MyService myService = ctx.getBean(MyService.class);
+    myService.doStuff();
+}
+```
+
+##### Building the container programmatically using register(Class<?>…​)
+```
+public static void main(String[] args) {
+    AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
+    ctx.register(AppConfig.class, OtherConfig.class);
+    ctx.register(AdditionalConfig.class);
+    ctx.refresh();
+    MyService myService = ctx.getBean(MyService.class);
+    myService.doStuff();
+}
+```
+
+##### Enabling component scanning with scan(String…​)
+```
+@Configuration
+@ComponentScan(basePackages = "com.acme")
+public class AppConfig  {
+}
+```
+
+#### Using the @Bean annotation
+
+##### Bean dependencies
+
+```
+@Configuration
+public class AppConfig {
+    @Bean
+    public TransferService transferService(AccountRepository accountRepository) {
+        return new TransferServiceImpl(accountRepository);
+    }
+}
+```
+
+##### Receiving lifecycle callbacks
+
+```
+public class Foo {
+    public void init() {
+    }
+}
+public class Bar {
+    public void cleanup() {
+    }
+}
+@Configuration
+public class AppConfig {
+    @Bean(initMethod = "init")
+    public Foo foo() {
+        return new Foo();
+    }
+    @Bean(destroyMethod = "cleanup")
+    public Bar bar() {
+        return new Bar();
+    }
+}
+```
+
+##### Using the @Scope annotation
+
+```
+@Configuration
+public class MyConfiguration {
+    @Bean
+    @Scope("prototype")
+    public Encryptor encryptor() {
+    }
+}
+```
+
+##### Bean aliasing
+
+```
+@Configuration
+public class AppConfig {
+    @Bean(name = { "dataSource", "subsystemA-dataSource", "subsystemB-dataSource" })
+    public DataSource dataSource() {
+    }
+}
+```
+
+##### Bean description
+
+```
+@Configuration
+public class AppConfig {
+    @Bean
+    @Description("Provides a basic example of a bean")
+    public Foo foo() {
+        return new Foo();
+    }
+}
+```
+
+#### Composing Java-based configurations
+
+##### Using the @Import annotation
+
+```
+@Configuration
+@Import(ConfigA.class)
+public class ConfigB {
+    @Bean
+    public B b() {
+        return new B();
+    }
+}
+```
+
+### Environment abstraction
+
+```
+@Configuration
+@Profile("dev")
+public class StandaloneDataConfig {}
+```
+
+```
+AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
+ctx.getEnvironment().setActiveProfiles("dev");
+ctx.register(SomeConfig.class, StandaloneDataConfig.class, JndiDataConfig.class);
+ctx.refresh();
+```
