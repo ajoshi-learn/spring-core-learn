@@ -1,5 +1,69 @@
 # Spring Core Notes
 
+* [Spring Core Notes](#spring-core-notes)
+      * [The IoC container](#the-ioc-container)
+         * [Container overview](#container-overview)
+            * [Instantiating a container](#instantiating-a-container)
+               * [Composing XML-based configuration metadata](#composing-xml-based-configuration-metadata)
+            * [Using the container](#using-the-container)
+         * [Bean overview](#bean-overview)
+               * [Naming beans](#naming-beans)
+               * [Aliasing a bean outside the bean definition](#aliasing-a-bean-outside-the-bean-definition)
+            * [Instantiating beans](#instantiating-beans)
+               * [Instantiation with a constructor](#instantiation-with-a-constructor)
+               * [Instantiation with a static factory method](#instantiation-with-a-static-factory-method)
+               * [Instantiation using an instance factory method](#instantiation-using-an-instance-factory-method)
+         * [Dependencies](#dependencies)
+            * [Constructor argument resolution](#constructor-argument-resolution)
+            * [Setter-based dependency injection](#setter-based-dependency-injection)
+            * [Dependency resolution process](#dependency-resolution-process)
+            * [Dependencies and configuration in detail](#dependencies-and-configuration-in-detail)
+               * [Straight values (primitives, Strings, and so on)](#straight-values-primitives-strings-and-so-on)
+               * [The idref element](#the-idref-element)
+               * [References to other beans (collaborators)](#references-to-other-beans-collaborators)
+               * [Inner beans](#inner-beans)
+               * [Collections](#collections)
+               * [Collection merging](#collection-merging)
+               * [Null and empty string values](#null-and-empty-string-values)
+            * [Using depends-on](#using-depends-on)
+            * [Lazy-initialized beans](#lazy-initialized-beans)
+            * [Autowiring](#autowiring)
+               * [Limitations and disadvantages of autowiring](#limitations-and-disadvantages-of-autowiring)
+               * [Excluding a bean from autowiring](#excluding-a-bean-from-autowiring)
+               * [Arbitrary method replacement](#arbitrary-method-replacement)
+         * [Bean scopes](#bean-scopes)
+            * [Singleton scope](#singleton-scope)
+            * [Prototype scope](#prototype-scope)
+            * [Custom scopes](#custom-scopes)
+               * [Creating a custom scope](#creating-a-custom-scope)
+         * [Customizing the nature of a bean](#customizing-the-nature-of-a-bean)
+            * [Lifecycle callbacks](#lifecycle-callbacks)
+               * [Initialization callbacks](#initialization-callbacks)
+               * [Destruction callbacks](#destruction-callbacks)
+               * [Default initialization and destroy methods](#default-initialization-and-destroy-methods)
+               * [Combining lifecycle mechanisms](#combining-lifecycle-mechanisms)
+            * [ApplicationContextAware and BeanNameAware](#applicationcontextaware-and-beannameaware)
+         * [Bean definition inheritance](#bean-definition-inheritance)
+         * [Container extension points](#container-extension-points)
+            * [Customizing beans using a BeanPostProcessor](#customizing-beans-using-a-beanpostprocessor)
+            * [Customizing configuration metadata with a BeanFactoryPostProcessor](#customizing-configuration-metadata-with-a-beanfactorypostprocessor)
+            * [Customizing instantiation logic with a FactoryBean](#customizing-instantiation-logic-with-a-factorybean)
+         * [Annotation-based container configuration](#annotation-based-container-configuration)
+            * [@Required](#required)
+            * [@Autowired](#autowired)
+            * [Fine-tuning annotation-based autowiring with @Primary](#fine-tuning-annotation-based-autowiring-with-primary)
+            * [Fine-tuning annotation-based autowiring with qualifiers](#fine-tuning-annotation-based-autowiring-with-qualifiers)
+            * [Using generics as autowiring qualifiers](#using-generics-as-autowiring-qualifiers)
+            * [@Resource](#resource)
+         * [Classpath scanning and managed components](#classpath-scanning-and-managed-components)
+            * [@Component and further stereotype annotations](#component-and-further-stereotype-annotations)
+            * [Meta-annotations](#meta-annotations)
+            * [Automatically detecting classes and registering bean definitions](#automatically-detecting-classes-and-registering-bean-definitions)
+            * [Using filters to customize scanning](#using-filters-to-customize-scanning)
+            * [Defining bean metadata within components](#defining-bean-metadata-within-components)
+            * [Naming autodetected components](#naming-autodetected-components)
+         * [Java-based container configuration](#java-based-container-configuration)
+
 ## The IoC container
 
 ### Container overview
@@ -630,3 +694,11 @@ public class FactoryMethodComponent {
 }
 ```
 
+#### Naming autodetected components
+```
+@Service("myMovieLister")
+public class SimpleMovieLister {
+}
+```
+
+### Java-based container configuration
