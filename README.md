@@ -496,3 +496,137 @@ The `FactoryBean` interface provides three methods:
 * `boolean isSingleton()`: returns true if this FactoryBean returns singletons, false otherwise.
 * `Class getObjectType()`: returns the object type returned by the `getObject()` method or null if the type is not known in advance.
 
+### Annotation-based container configuration
+```
+<context:annotation-config/>
+```
+
+(The implicitly registered post-processors include `AutowiredAnnotationBeanPostProcessor`, `CommonAnnotationBeanPostProcessor`, `PersistenceAnnotationBeanPostProcessor`, as well as the aforementioned `RequiredAnnotationBeanPostProcessor`.)
+
+#### @Required
+The `@Required` annotation applies to bean property setter methods, as in the following example:
+```
+public class SimpleMovieLister {
+    private MovieFinder movieFinder;
+    @Required
+    public void setMovieFinder(MovieFinder movieFinder) {
+        this.movieFinder = movieFinder;
+    }
+    // ...
+}
+```
+This annotation simply indicates that the affected bean property must be populated at configuration time, through an explicit property value in a bean definition or through autowiring. The container throws an exception if the affected bean property has not been populated; this allows for eager and explicit failure, avoiding NullPointerExceptions or the like later on.
+
+#### @Autowired
+ou can apply the `@Autowired` annotation to constructors, setters, methods or fields.
+It is also possible to provide all beans of a particular type from the ApplicationContext by adding the annotation to a field or method that expects an array of that type:
+```
+public class MovieRecommender {
+    @Autowired
+    private MovieCatalog[] movieCatalogs;
+    // ...
+}
+```
+The same applies for typed collections.
+
+By default, the autowiring fails whenever zero candidate beans are available; the default behavior is to treat annotated methods, constructors, and fields as indicating required dependencies. This behavior can be changed as demonstrated below.
+```
+public class SimpleMovieLister {
+    private MovieFinder movieFinder;
+    @Autowired(required=false)
+    public void setMovieFinder(MovieFinder movieFinder) {
+        this.movieFinder = movieFinder;
+    }
+    // ...
+}
+```
+You can also use `@Autowired` for interfaces that are well-known resolvable dependencies: `BeanFactory`, `ApplicationContext`, `Environment`, `ResourceLoader`, `ApplicationEventPublisher`, and `MessageSource`. These interfaces and their extended interfaces, such as `ConfigurableApplicationContext` or `ResourcePatternResolver`, are automatically resolved, with no special setup necessary.
+
+#### Fine-tuning annotation-based autowiring with @Primary
+Because autowiring by type may lead to multiple candidates, it is often necessary to have more control over the selection process. One way to accomplish this is with Spring’s `@Primary` annotation. `@Primary` indicates that a particular bean should be given preference when multiple beans are candidates to be autowired to a single-valued dependency. If exactly one 'primary' bean exists among the candidates, it will be the autowired value.
+
+#### Fine-tuning annotation-based autowiring with qualifiers
+`@Primary` is an effective way to use autowiring by type with several instances when one primary candidate can be determined. When more control over the selection process is required, Spring’s `@Qualifier` annotation can be used. You can associate qualifier values with specific arguments, narrowing the set of type matches so that a specific bean is chosen for each argument. In the simplest case, this can be a plain descriptive value:
+```
+public class MovieRecommender {
+    @Autowired
+    @Qualifier("main")
+    private MovieCatalog movieCatalog;
+    // ...
+}
+```
+
+#### Using generics as autowiring qualifiers
+In addition to the `@Qualifier` annotation, it is also possible to use Java generic types as an implicit form of qualification. For example, suppose you have the following configuration:
+```
+@Configuration
+public class MyConfiguration {
+    @Bean
+    public StringStore stringStore() {
+        return new StringStore();
+    }
+    @Bean
+    public IntegerStore integerStore() {
+        return new IntegerStore();
+    }
+}
+```
+
+Assuming that beans above implement a generic interface, i.e. `Store<String>` and `Store<Integer>`, you can `@Autowire` the `Store` interface and the generic will be used as a qualifier:
+```
+@Autowired
+private Store<String> s1; // <String> qualifier, injects the stringStore bean
+@Autowired 
+private Store<Integer> s2; // <Integer> qualifier, injects the integerStore bean
+```
+
+#### @Resource
+Spring also supports injection using the JSR-250 `@Resource` annotation on fields or bean property setter methods.
+
+### Classpath scanning and managed components
+
+#### `@Component` and further stereotype annotations
+
+Spring provides further stereotype annotations: `@Component`, `@Service`, and `@Controller`. `@Component` is a generic stereotype for any Spring-managed component. `@Repository`, `@Service`, and `@Controller` are specializations of `@Component` for more specific use cases, for example, in the persistence, service, and presentation layers, respectively. Therefore, you can annotate your component classes with `@Component`, but by annotating them with `@Repository`, `@Service`, or `@Controller` instead, your classes are more properly suited for processing by tools or associating with aspects.
+
+#### Meta-annotations
+
+Many of the annotations provided by Spring can be used as meta-annotations in your own code. A meta-annotation is simply an annotation that can be applied to another annotation.
+Meta-annotations can also be combined to create composed annotations. For example, the `@RestController` annotation from Spring MVC is composed of `@Controller` and `@ResponseBody`.
+
+#### Automatically detecting classes and registering bean definitions
+
+To autodetect classes and register the corresponding beans, you need to add `@ComponentScan` to your `@Configuration` class, where the `basePackages` attribute is a common parent package for the two classes.
+```
+@Configuration
+@ComponentScan(basePackages = "org.example")
+public class AppConfig  {
+}
+```
+
+#### Using filters to customize scanning
+
+```
+@Configuration
+@ComponentScan(basePackages = "org.example",
+        includeFilters = @Filter(type = FilterType.REGEX, pattern = ".*Stub.*Repository"),
+        excludeFilters = @Filter(Repository.class))
+public class AppConfig {
+}
+```
+
+#### Defining bean metadata within components
+
+```
+@Component
+public class FactoryMethodComponent {
+    @Bean
+    @Qualifier("public")
+    public TestBean publicInstance() {
+        return new TestBean("publicInstance");
+    }
+    public void doWork() {
+    }
+}
+```
+
