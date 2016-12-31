@@ -630,3 +630,182 @@ public class FactoryMethodComponent {
 }
 ```
 
+## Aspect oriented programming with Spring
+
+### Introduction
+
+#### AOP concepts
+
+* _Aspect_: a modularization of a concern that cuts across multiple classes.
+* _Join point_: a point during the execution of a program, such as the execution of a method or the handling of an exception. In Spring AOP, a join point always represents a _method execution_.
+* _Advice_: action taken by an aspect at a particular join point. Different types of advice include "around," "before" and "after" advice.
+* _Pointcut_: a predicate that matches join points.
+* _Target object_: object being advised by one or more aspects. Also referred to as the advised object.
+* _AOP proxy_: an object created by the AOP framework in order to implement the aspect contracts
+* _Weaving_: linking aspects with other application types or objects to create an advised object.
+
+Types of advice:
+
+* _Before advice_: Advice that executes before a join point, but which does not have the ability to prevent execution flow proceeding to the join point (unless it throws an exception).
+* _After_ returning advice_: Advice to be executed after a join point completes normally: for example, if a method returns without throwing an exception.
+* _After_ throwing advice_: Advice to be executed if a method exits by throwing an exception.
+* _After_ (finally) advice_: Advice to be executed regardless of the means by which a join point exits (normal or exceptional return).
+* _Around_ advice_: Advice that surrounds a join point such as a method invocation. This is the most powerful kind of advice. Around advice can perform custom behavior before and after the method invocation. It is also responsible for choosing whether to proceed to the join point or to shortcut the advised method execution by returning its own return value or throwing an exception.
+
+### AspectJ support
+
+#### Enabling AspectJ support
+```
+@Configuration
+@EnableAspectJAutoProxy
+public class AppConfig {
+}
+```
+
+#### Declaring an aspect
+```
+@Aspect
+public class NotVeryUsefulAspect {
+}
+```
+
+#### Declaring a pointcut
+```
+@Pointcut("execution(* transfer(..))")// the pointcut expression
+private void anyOldTransfer() {}// the pointcut signature
+```
+
+##### Supported Pointcut Designators
+
+* _execution_ - for matching method execution join points, this is the primary pointcut designator you will use when working with Spring AOP
+* _within_ - limits matching to join points within certain types (simply the execution of a method declared within a matching type when using Spring AOP)
+* _this_ - limits matching to join points (the execution of methods when using Spring AOP) where the bean reference (Spring AOP proxy) is an instance of the given type
+* _target_ - limits matching to join points (the execution of methods when using Spring AOP) where the target object (application object being proxied) is an instance of the given type
+* _args_ - limits matching to join points (the execution of methods when using Spring AOP) where the arguments are instances of the given types
+* _@target_ - limits matching to join points (the execution of methods when using Spring AOP) where the class of the executing object has an annotation of the given type
+* _@args_ - limits matching to join points (the execution of methods when using Spring AOP) where the runtime type of the actual arguments passed have annotations of the given type(s)
+* _@within_ - limits matching to join points within types that have the given annotation (the execution of methods declared in types with the given annotation when using Spring AOP)
+* _@annotation_ - limits matching to join points where the subject of the join point (method being executed in Spring AOP) has the given annotation
+
+##### Combining pointcut expressions
+```
+@Pointcut("execution(public * *(..))")
+private void anyPublicOperation() {}
+
+@Pointcut("within(com.xyz.someapp.trading..*)")
+private void inTrading() {}
+
+@Pointcut("anyPublicOperation() && inTrading()")
+private void tradingOperation() {}
+```
+
+#### Examples
+
+* the execution of any public method:
+`execution(public * *(..))`
+
+* the execution of any method with a name beginning with "set":
+`execution(* set*(..))`
+
+* the execution of any method defined by the `AccountService` interface:
+`execution(* com.xyz.service.AccountService.*(..))*`
+
+* the execution of any method defined in the service package:
+`execution(* com.xyz.service.*.*(..))`
+
+* any join point (method execution only in Spring AOP) within the service package:
+`within(com.xyz.service.*)`
+
+* any join point (method execution only in Spring AOP) within the service package or a sub-package:
+`within(com.xyz.service..*)`
+
+* any join point (method execution only in Spring AOP) where the proxy implements the `AccountService` interface:
+`this(com.xyz.service.AccountService)`
+
+* any join point (method execution only in Spring AOP) where the target object implements the `AccountService` interface:
+target(com.xyz.service.AccountService)
+
+* any join point (method execution only in Spring AOP) which takes a single parameter, and where the argument passed at runtime is `Serializable`:
+`args(java.io.Serializable)`
+
+* any join point (method execution only in Spring AOP) where the target object has an `@Transactional` annotation:
+`@target(org.springframework.transaction.annotation.Transactional)`
+
+* any join point (method execution only in Spring AOP) where the declared type of the target object has an `@Transactional` annotation:
+`@within(org.springframework.transaction.annotation.Transactional)`
+
+* any join point (method execution only in Spring AOP) where the executing method has an `@Transactional` annotation:
+`@annotation(org.springframework.transaction.annotation.Transactional)`
+
+* any join point (method execution only in Spring AOP) which takes a single parameter, and where the runtime type of the argument passed has the `@Classified` annotation:
+`@args(com.xyz.security.Classified)`
+
+* any join point (method execution only in Spring AOP) on a Spring bean named `tradeService`:
+`bean(tradeService)`
+
+* any join point (method execution only in Spring AOP) on Spring beans having names that match the wildcard expression `*Service`:
+`bean(*Service)`
+
+#### Declaring advice
+
+##### Before advice
+
+```
+@Before("com.xyz.myapp.SystemArchitecture.dataAccessOperation()")
+public void doAccessCheck() {
+}
+```
+
+##### After returning advice
+
+```
+@AfterReturning("com.xyz.myapp.SystemArchitecture.dataAccessOperation()")
+    public void doAccessCheck() {
+        // ...
+    }
+```
+Sometimes you need access in the advice body to the actual value that was returned. You can use the form of `@AfterReturning` that binds the return value for this:
+```
+@AfterReturning(
+        pointcut="com.xyz.myapp.SystemArchitecture.dataAccessOperation()",
+        returning="retVal")
+    public void doAccessCheck(Object retVal) {
+        // ...
+    }
+```
+
+##### After throwing advice
+```
+@AfterThrowing(
+        pointcut="com.xyz.myapp.SystemArchitecture.dataAccessOperation()",
+        throwing="ex")
+    public void doRecoveryActions(DataAccessException ex) {
+    }
+```
+
+##### After (finally) advice
+```
+@After("com.xyz.myapp.SystemArchitecture.dataAccessOperation()")
+    public void doReleaseLock() {
+        // ...
+    }
+```
+
+##### Around advice 
+```
+@Around("com.xyz.myapp.SystemArchitecture.businessService()")
+    public Object doBasicProfiling(ProceedingJoinPoint pjp) throws Throwable {
+        // start stopwatch
+        Object retVal = pjp.proceed();
+        // stop stopwatch
+        return retVal;
+    }
+```
+
+##### Passing parameters to advice
+```
+@Before("com.xyz.myapp.SystemArchitecture.dataAccessOperation() && args(account,..)")
+public void validateAccount(Account account) {
+    // ...
+}
+```
