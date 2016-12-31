@@ -1,5 +1,69 @@
 # Spring Core Notes
 
+* [Spring Core Notes](#spring-core-notes)
+      * [The IoC container](#the-ioc-container)
+         * [Container overview](#container-overview)
+            * [Instantiating a container](#instantiating-a-container)
+               * [Composing XML-based configuration metadata](#composing-xml-based-configuration-metadata)
+            * [Using the container](#using-the-container)
+         * [Bean overview](#bean-overview)
+               * [Naming beans](#naming-beans)
+               * [Aliasing a bean outside the bean definition](#aliasing-a-bean-outside-the-bean-definition)
+            * [Instantiating beans](#instantiating-beans)
+               * [Instantiation with a constructor](#instantiation-with-a-constructor)
+               * [Instantiation with a static factory method](#instantiation-with-a-static-factory-method)
+               * [Instantiation using an instance factory method](#instantiation-using-an-instance-factory-method)
+         * [Dependencies](#dependencies)
+            * [Constructor argument resolution](#constructor-argument-resolution)
+            * [Setter-based dependency injection](#setter-based-dependency-injection)
+            * [Dependency resolution process](#dependency-resolution-process)
+            * [Dependencies and configuration in detail](#dependencies-and-configuration-in-detail)
+               * [Straight values (primitives, Strings, and so on)](#straight-values-primitives-strings-and-so-on)
+               * [The idref element](#the-idref-element)
+               * [References to other beans (collaborators)](#references-to-other-beans-collaborators)
+               * [Inner beans](#inner-beans)
+               * [Collections](#collections)
+               * [Collection merging](#collection-merging)
+               * [Null and empty string values](#null-and-empty-string-values)
+            * [Using depends-on](#using-depends-on)
+            * [Lazy-initialized beans](#lazy-initialized-beans)
+            * [Autowiring](#autowiring)
+               * [Limitations and disadvantages of autowiring](#limitations-and-disadvantages-of-autowiring)
+               * [Excluding a bean from autowiring](#excluding-a-bean-from-autowiring)
+               * [Arbitrary method replacement](#arbitrary-method-replacement)
+         * [Bean scopes](#bean-scopes)
+            * [Singleton scope](#singleton-scope)
+            * [Prototype scope](#prototype-scope)
+            * [Custom scopes](#custom-scopes)
+               * [Creating a custom scope](#creating-a-custom-scope)
+         * [Customizing the nature of a bean](#customizing-the-nature-of-a-bean)
+            * [Lifecycle callbacks](#lifecycle-callbacks)
+               * [Initialization callbacks](#initialization-callbacks)
+               * [Destruction callbacks](#destruction-callbacks)
+               * [Default initialization and destroy methods](#default-initialization-and-destroy-methods)
+               * [Combining lifecycle mechanisms](#combining-lifecycle-mechanisms)
+            * [ApplicationContextAware and BeanNameAware](#applicationcontextaware-and-beannameaware)
+         * [Bean definition inheritance](#bean-definition-inheritance)
+         * [Container extension points](#container-extension-points)
+            * [Customizing beans using a BeanPostProcessor](#customizing-beans-using-a-beanpostprocessor)
+            * [Customizing configuration metadata with a BeanFactoryPostProcessor](#customizing-configuration-metadata-with-a-beanfactorypostprocessor)
+            * [Customizing instantiation logic with a FactoryBean](#customizing-instantiation-logic-with-a-factorybean)
+         * [Annotation-based container configuration](#annotation-based-container-configuration)
+            * [@Required](#required)
+            * [@Autowired](#autowired)
+            * [Fine-tuning annotation-based autowiring with @Primary](#fine-tuning-annotation-based-autowiring-with-primary)
+            * [Fine-tuning annotation-based autowiring with qualifiers](#fine-tuning-annotation-based-autowiring-with-qualifiers)
+            * [Using generics as autowiring qualifiers](#using-generics-as-autowiring-qualifiers)
+            * [@Resource](#resource)
+         * [Classpath scanning and managed components](#classpath-scanning-and-managed-components)
+            * [@Component and further stereotype annotations](#component-and-further-stereotype-annotations)
+            * [Meta-annotations](#meta-annotations)
+            * [Automatically detecting classes and registering bean definitions](#automatically-detecting-classes-and-registering-bean-definitions)
+            * [Using filters to customize scanning](#using-filters-to-customize-scanning)
+            * [Defining bean metadata within components](#defining-bean-metadata-within-components)
+            * [Naming autodetected components](#naming-autodetected-components)
+         * [Java-based container configuration](#java-based-container-configuration)
+
 ## The IoC container
 
 ### Container overview
@@ -808,4 +872,159 @@ Sometimes you need access in the advice body to the actual value that was return
 public void validateAccount(Account account) {
     // ...
 }
+```
+#### Naming autodetected components
+```
+@Service("myMovieLister")
+public class SimpleMovieLister {
+}
+```
+
+### Java-based container configuration
+
+#### Basic concepts: @Bean and @Configuration
+Annotating a class with `@Configuration` indicates that its primary purpose is as a source of bean definitions. Furthermore, `@Configuration` classes allow inter-bean dependencies to be defined by simply calling other `@Bean` methods in the same class. The simplest possible `@Configuration` class would read as follows:
+```
+@Configuration
+public class AppConfig {
+    @Bean
+    public MyService myService() {
+        return new MyServiceImpl();
+    }
+}
+```
+
+#### Instantiating the Spring container using AnnotationConfigApplicationContext
+
+##### Simple construction
+```
+public static void main(String[] args) {
+    ApplicationContext ctx = new AnnotationConfigApplicationContext(AppConfig.class);
+    MyService myService = ctx.getBean(MyService.class);
+    myService.doStuff();
+}
+```
+
+##### Building the container programmatically using register(Class<?>…​)
+```
+public static void main(String[] args) {
+    AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
+    ctx.register(AppConfig.class, OtherConfig.class);
+    ctx.register(AdditionalConfig.class);
+    ctx.refresh();
+    MyService myService = ctx.getBean(MyService.class);
+    myService.doStuff();
+}
+```
+
+##### Enabling component scanning with scan(String…​)
+```
+@Configuration
+@ComponentScan(basePackages = "com.acme")
+public class AppConfig  {
+}
+```
+
+#### Using the @Bean annotation
+
+##### Bean dependencies
+
+```
+@Configuration
+public class AppConfig {
+    @Bean
+    public TransferService transferService(AccountRepository accountRepository) {
+        return new TransferServiceImpl(accountRepository);
+    }
+}
+```
+
+##### Receiving lifecycle callbacks
+
+```
+public class Foo {
+    public void init() {
+    }
+}
+public class Bar {
+    public void cleanup() {
+    }
+}
+@Configuration
+public class AppConfig {
+    @Bean(initMethod = "init")
+    public Foo foo() {
+        return new Foo();
+    }
+    @Bean(destroyMethod = "cleanup")
+    public Bar bar() {
+        return new Bar();
+    }
+}
+```
+
+##### Using the @Scope annotation
+
+```
+@Configuration
+public class MyConfiguration {
+    @Bean
+    @Scope("prototype")
+    public Encryptor encryptor() {
+    }
+}
+```
+
+##### Bean aliasing
+
+```
+@Configuration
+public class AppConfig {
+    @Bean(name = { "dataSource", "subsystemA-dataSource", "subsystemB-dataSource" })
+    public DataSource dataSource() {
+    }
+}
+```
+
+##### Bean description
+
+```
+@Configuration
+public class AppConfig {
+    @Bean
+    @Description("Provides a basic example of a bean")
+    public Foo foo() {
+        return new Foo();
+    }
+}
+```
+
+#### Composing Java-based configurations
+
+##### Using the @Import annotation
+
+```
+@Configuration
+@Import(ConfigA.class)
+public class ConfigB {
+    @Bean
+    public B b() {
+        return new B();
+    }
+}
+```
+
+### Environment abstraction
+
+```
+@Configuration
+@Profile("dev")
+public class StandaloneDataConfig {}
+```
+
+```
+AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
+ctx.getEnvironment().setActiveProfiles("dev");
+ctx.register(SomeConfig.class, StandaloneDataConfig.class, JndiDataConfig.class);
+ctx.refresh();
 ```
