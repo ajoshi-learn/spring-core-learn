@@ -61,8 +61,24 @@
             * [Automatically detecting classes and registering bean definitions](#automatically-detecting-classes-and-registering-bean-definitions)
             * [Using filters to customize scanning](#using-filters-to-customize-scanning)
             * [Defining bean metadata within components](#defining-bean-metadata-within-components)
-            * [Naming autodetected components](#naming-autodetected-components)
-         * [Java-based container configuration](#java-based-container-configuration)
+      * [Aspect oriented programming with Spring](#aspect-oriented-programming-with-spring)
+         * [Introduction](#introduction)
+            * [AOP concepts](#aop-concepts)
+         * [AspectJ support](#aspectj-support)
+            * [Enabling AspectJ support](#enabling-aspectj-support)
+            * [Declaring an aspect](#declaring-an-aspect)
+            * [Declaring a pointcut](#declaring-a-pointcut)
+               * [Supported Pointcut Designators](#supported-pointcut-designators)
+               * [Combining pointcut expressions](#combining-pointcut-expressions)
+            * [Examples](#examples)
+            * [Declaring advice](#declaring-advice)
+               * [Before advice](#before-advice)
+               * [After returning advice](#after-returning-advice)
+               * [After throwing advice](#after-throwing-advice)
+               * [After (finally) advice](#after-finally-advice)
+               * [Around advice](#around-advice)
+               * [Passing parameters to advice](#passing-parameters-to-advice)
+
 
 ## The IoC container
 
